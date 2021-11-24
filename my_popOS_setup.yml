@@ -1,0 +1,295 @@
+---
+- name: Dbenas Linux OS Setup
+  gather_facts: true
+  become: yes
+  hosts: localhost
+  vars:
+    architecture_map:
+      "x86_64": "amd64"
+      "aarch64": "arm64"
+      "aarch": "arm64"
+      "armhf": "armhf"
+      "armv7l": "armhf"
+  pre_tasks:
+
+
+# VALIDAR SPOTIFY REPO LIST
+
+
+
+    - name: validate ansible venv
+      shell: ls /home/daniel/ansible/bin/activate
+      register: ansible_venv
+      failed_when: ansible_venv.rc >= 2
+      changed_when: ansible_venv == 1
+    - name: Check if Mailspring must be installed
+      command: dpkg-query -l 'mailspring'
+      register: mailspring_check
+      changed_when: false
+      failed_when: mailspring_check.rc >= 2
+      # when: ansible_distribution == "Pop!_OS"
+    - name: Check if Teams must be installed
+      command: dpkg-query -l 'teams'
+      register: teams_check
+      changed_when: false
+      failed_when: teams_check.rc >= 2
+      # when: ansible_distribution == "Pop!_OS"
+    - name: Check if WPS-Office must be installed
+      command: dpkg-query -l 'wps-office'
+      register: wps_check
+      changed_when: false
+      failed_when: wps_check.rc >= 2
+      # when: ansible_distribution == "Pop!_OS"
+    - name: Check if VScode must be installed
+      command: dpkg-query -l 'code'
+      register: vscode_check
+      changed_when: false
+      failed_when: vscode_check.rc >= 2
+      # when: ansible_distribution == "Pop!_OS"
+    - name: Check if VirtualBox must be installed
+      command: dpkg-query -l 'virtualbox-6.1'
+      register: virtualbox_check
+      changed_when: false
+      failed_when: virtualbox_check.rc >= 2
+      # when: ansible_distribution == "Pop!_OS"
+    - name: Check if Edge must be installed
+      command: dpkg-query -l 'microsoft-edge-stable'
+      register: edge_check
+      changed_when: false
+      failed_when: edge_check.rc >= 2
+    - name: Check if Franz must be installed
+      command: dpkg-query -l 'franz'
+      register: franz_check
+      changed_when: false
+      failed_when: franz_check.rc >= 2
+    - name: Check if vagrant must be installed
+      command: dpkg-query -l 'vagrant'
+      register: vagrant_check
+      changed_when: false
+      failed_when: vagrant_check.rc >= 2
+    - name: Albion exists
+      stat: 
+        path: /home/daniel/albiononline/game_x64
+      register: albion_check
+    - name: Docker source exists
+      stat: 
+        path: /etc/apt/sources.list.d/docker.list
+      register: docker_src_check
+    - name: Azure source exists
+      stat: 
+        path: /etc/apt/sources.list.d/azure-cli.list
+      register: azcli_src_check
+    - name: Spotify source exists
+      stat: 
+        path: /etc/apt/sources.list.d/spotify.list
+      register: spotify_src_check
+    - name: brew is installed
+      stat: 
+        path: /home/linuxbrew/.linuxbrew/
+      register: brew_check
+    - name: Brew bash profile check
+      shell: 
+        cmd: cat /home/daniel/.profile | grep 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
+      register: brew_shell_check
+      failed_when: brew_shell_check.rc >= 2
+      changed_when: brew_shell_check.rc == 1
+
+    - name: Remove old Docker packages and unused softwares
+      ansible.builtin.apt:
+        name:
+          - docker 
+          - docker-engine 
+          - docker.io 
+          - containerd 
+          - runc
+          - libreoffice-core
+          - libreoffice-style-colibre
+          - libreoffice-style-yaru
+          - libreoffice-style-elementary
+          - libreoffice-common
+        state: absent
+        autoremove: yes
+        autoclean: yes
+        purge: yes
+      when: ansible_distribution == 'Pop!_OS' and docker_src_check.stat.exists == false
+    - name: Docker - Prepare apt to use https repos
+      ansible.builtin.apt: 
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+          - apt-transport-https
+    - name: Add docker GPG key
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        keyring: /usr/share/keyrings/docker-archive-keyring.gpg
+        state: present
+    - name: Add Microsoft Azcli GPG key
+      ansible.builtin.apt_key:
+        url: https://packages.microsoft.com/keys/microsoft.asc
+        keyring: /etc/apt/trusted.gpg.d/microsoft.gpg
+        state: present
+    # - name: Add Spotify GPG key
+    #   ansible.builtin.apt_key:
+    #     url: https://download.spotify.com/debian/pubkey_0D811D58.gpg
+    #     keyring: /usr/share/keyrings/D1742AD60D811D58.gpg
+    #     state: present
+    # Using shell to avoid errors
+    - name: Add Spotify repository
+      ansible.builtin.shell:
+        cmd: |
+          curl -sS https://download.spotify.com/debian/pubkey_0D811D58.gpg | sudo apt-key add - 
+          echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
+      when: ansible_distribution == "Pop!_OS" and spotify_src_check.stat.exists == false
+    - name: Add docker repository
+      ansible.builtin.shell:
+        cmd: |
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+      when: ansible_distribution == "Pop!_OS" and docker_src_check.stat.exists == false
+    - name: Add azcli repository 
+      ansible.builtin.shell:
+        cmd: |
+          echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
+      when: ansible_distribution == "Pop!_OS" and azcli_src_check.stat.exists == false
+    - name: install homebrew
+      ansible.builtin.shell:
+        cmd: |
+          echo | /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+      become_user: daniel
+      when: brew_check.stat.exists == false
+    - name: Add homebrew to user path and shellenv
+      ansible.builtin.shell:
+        cmd: |
+          echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/daniel/.profile
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+      become: no
+      when: brew_shell_check.rc == 1
+  tasks:
+    - name: Install my Apps
+      ansible.builtin.apt:
+        name: 
+          - tree
+          - okular
+          - git
+          - python3
+          - python3-pip
+          - python3-virtualenv
+          - vim
+          - docker
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - gimp
+          - xz-utils
+          - snapd
+          - build-essential 
+          - procps 
+          - file 
+          - git
+          - curl
+          - gnome-tweaks
+          - gnome-sushi
+          - gnome-shell-extensions
+          - gnome-shell-extension-weather
+          - gnome-weather
+          - azure-cli
+          - spotify-client
+          # - ttf-mscorefonts-installer
+        state: latest
+        update_cache: yes
+      when: ansible_distribution == 'Pop!_OS'
+    - name: Install Mailspring DebPkg
+      ansible.builtin.apt:    
+        deb: https://updates.getmailspring.com/download?platform=linuxDeb 
+      when: mailspring_check.rc == 1
+    - name: Install VScode DebPkg
+      ansible.builtin.apt:    
+        deb: https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64
+      when: vscode_check.rc == 1
+    - name: Install EdgeStable DebPkg
+      ansible.builtin.apt:    
+        deb: https://go.microsoft.com/fwlink/?linkid=2149051
+      when: edge_check.rc == 1
+    - name: Install Teams DebPkg
+      ansible.builtin.apt:    
+        deb: https://go.microsoft.com/fwlink/p/?LinkID=2112886&culture=en-us&country=WW
+      when: teams_check.rc == 1
+    - name: Install Franz DebPkg
+      ansible.builtin.apt:  
+        deb: https://github.com/meetfranz/franz/releases/download/v5.7.0/franz_5.7.0_amd64.deb
+      when: franz_check.rc == 1
+    - name: Install WPS Office
+      ansible.builtin.apt:  
+        deb: https://wdl1.pcfg.cache.wpscdn.com/wpsdl/wpsoffice/download/linux/10702/wps-office_11.1.0.10702.XA_amd64.deb
+      when: wps_check.rc == 1
+    - name: Install Virtualbox
+      ansible.builtin.apt:  
+        deb: https://download.virtualbox.org/virtualbox/6.1.28/virtualbox-6.1_6.1.28-147628~Ubuntu~eoan_amd64.deb
+      when: virtualbox_check.rc == 1
+    - name: Install Vagrant
+      ansible.builtin.apt:  
+        deb: https://releases.hashicorp.com/vagrant/2.2.19/vagrant_2.2.19_x86_64.deb
+      when: vagrant_check.rc == 1
+    - name: brew packages install
+      community.general.homebrew:
+        name: terraform
+        state: present
+        update_homebrew: yes
+      become: no
+    - name: Install Snap Softwares
+      community.general.snap:
+        name: p3x-onenote
+        state: present
+      when: ansible_distribution == 'Pop!_OS'
+    - name: Download Albion setup script
+      ansible.builtin.get_url:
+        url: https://live.albiononline.com/clients/20211013103626/albion-online-setup
+        dest: /home/daniel/Downloads/albion-online-setup
+        mode: 0775 # Execute permission
+      when: albion_check.stat.exists == false
+      register: albion_download
+    - name: Install AlbionOnline
+      ansible.builtin.shell: 
+        cmd: /home/daniel/Downloads/albion-online-setup
+      when: albion_check.stat.exists == false
+      become: no
+#        homebrew = Helm, terraform
+    # - name: Setup my ansible Env Source # find a way ti get to current user home
+    #   ansible.builtin.shell: |
+    #      cd ~/
+    #      virtualenv ansible
+    #      source ansible/bin/activate
+    #      pip install ansible "ansible-lint[yamllint]"
+    #   when: ansible_venv.rc == 1
+  post_tasks:
+    - name: Add User to Docker Group
+      ansible.builtin.user:
+        name: daniel
+        groups: docker
+        append: yes
+    - name: Configure docker services to start at boot
+      ansible.builtin.service:
+        name: "{{ item }}"
+        enabled: yes
+      loop: 
+        - docker.service
+        - containerd.service
+    - name: Check if docker.sock file permissions are OK
+      ansible.builtin.file:
+        path: /var/run/docker.sock
+        mode: 0666
+    - name: Update all packages
+      ansible.builtin.apt:
+        name: "*"
+        state: latest
+        autoremove: yes
+        autoclean: yes
+    - name: Remove dependencies that are no longer required
+      ansible.builtin.apt:
+        autoremove: yes
+        autoclean: yes
+    - name: Update all Flatpak software
+      command: flatpak update -y
+      changed_when: false
+...
