@@ -11,62 +11,9 @@
       "armhf": "armhf"
       "armv7l": "armhf"
   pre_tasks:
-
+    - include: tasks/app_detection.yml
 
 # VALIDAR SPOTIFY REPO LIST
-
-
-
-    - name: validate ansible venv
-      shell: ls /home/daniel/ansible/bin/activate
-      register: ansible_venv
-      failed_when: ansible_venv.rc >= 2
-      changed_when: ansible_venv == 1
-    - name: Check if Mailspring must be installed
-      command: dpkg-query -l 'mailspring'
-      register: mailspring_check
-      changed_when: false
-      failed_when: mailspring_check.rc >= 2
-      # when: ansible_distribution == "Pop!_OS"
-    - name: Check if Teams must be installed
-      command: dpkg-query -l 'teams'
-      register: teams_check
-      changed_when: false
-      failed_when: teams_check.rc >= 2
-      # when: ansible_distribution == "Pop!_OS"
-    - name: Check if WPS-Office must be installed
-      command: dpkg-query -l 'wps-office'
-      register: wps_check
-      changed_when: false
-      failed_when: wps_check.rc >= 2
-      # when: ansible_distribution == "Pop!_OS"
-    - name: Check if VScode must be installed
-      command: dpkg-query -l 'code'
-      register: vscode_check
-      changed_when: false
-      failed_when: vscode_check.rc >= 2
-      # when: ansible_distribution == "Pop!_OS"
-    - name: Check if VirtualBox must be installed
-      command: dpkg-query -l 'virtualbox-6.1'
-      register: virtualbox_check
-      changed_when: false
-      failed_when: virtualbox_check.rc >= 2
-      # when: ansible_distribution == "Pop!_OS"
-    - name: Check if Edge must be installed
-      command: dpkg-query -l 'microsoft-edge-stable'
-      register: edge_check
-      changed_when: false
-      failed_when: edge_check.rc >= 2
-    - name: Check if Franz must be installed
-      command: dpkg-query -l 'franz'
-      register: franz_check
-      changed_when: false
-      failed_when: franz_check.rc >= 2
-    - name: Check if vagrant must be installed
-      command: dpkg-query -l 'vagrant'
-      register: vagrant_check
-      changed_when: false
-      failed_when: vagrant_check.rc >= 2
     - name: Albion exists
       stat: 
         path: /home/daniel/albiononline/game_x64
@@ -79,15 +26,15 @@
       stat: 
         path: /etc/apt/sources.list.d/azure-cli.list
       register: azcli_src_check
-    - name: Spotify source exists
+    - name: Check if Spotify source exists
       stat: 
         path: /etc/apt/sources.list.d/spotify.list
       register: spotify_src_check
-    - name: brew is installed
+    - name: CHeck if HomeBrew is installed
       stat: 
         path: /home/linuxbrew/.linuxbrew/
       register: brew_check
-    - name: Brew bash profile check
+    - name: HomeBrew bash profile check
       shell: 
         cmd: cat /home/daniel/.profile | grep 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
       register: brew_shell_check
@@ -130,11 +77,6 @@
         url: https://packages.microsoft.com/keys/microsoft.asc
         keyring: /etc/apt/trusted.gpg.d/microsoft.gpg
         state: present
-    # - name: Add Spotify GPG key
-    #   ansible.builtin.apt_key:
-    #     url: https://download.spotify.com/debian/pubkey_0D811D58.gpg
-    #     keyring: /usr/share/keyrings/D1742AD60D811D58.gpg
-    #     state: present
     # Using shell to avoid errors
     - name: Add Spotify repository
       ansible.builtin.shell:
@@ -191,6 +133,7 @@
           - gnome-tweaks
           - gnome-sushi
           - gnome-shell-extensions
+          - gnome-shell-extension-bluetooth-quick-connect
           - gnome-shell-extension-weather
           - gnome-weather
           - azure-cli
