@@ -2,6 +2,7 @@
 - name: Dbenas Linux OS Setup
   gather_facts: true
   become: yes
+  #become_user: daniel
   hosts: localhost
   vars:
     architecture_map:
@@ -11,62 +12,30 @@
       "armhf": "armhf"
       "armv7l": "armhf"
   pre_tasks:
-    - include: tasks/app_detection.yml
-
+    - name: Detection block
+      block: 
+        # App detection task
+        - include: tasks/app_detection.yml
+        # Repository detection task
+        - include: tasks/repos_detection.yml
+        # Settings detection task
+        - include: tasks/settings_detection.yml
 # VALIDAR SPOTIFY REPO LIST
-    - name: Albion exists
-      stat: 
-        path: /home/daniel/albiononline/game_x64
-      register: albion_check
-    - name: Docker source exists
-      stat: 
-        path: /etc/apt/sources.list.d/docker.list
-      register: docker_src_check
-    - name: Azure source exists
-      stat: 
-        path: /etc/apt/sources.list.d/azure-cli.list
-      register: azcli_src_check
-    - name: Check if Spotify source exists
-      stat: 
-        path: /etc/apt/sources.list.d/spotify.list
-      register: spotify_src_check
-    - name: CHeck if HomeBrew is installed
-      stat: 
-        path: /home/linuxbrew/.linuxbrew/
-      register: brew_check
-    - name: HomeBrew bash profile check
-      shell: 
-        cmd: cat /home/daniel/.profile | grep 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
-      register: brew_shell_check
-      failed_when: brew_shell_check.rc >= 2
-      changed_when: brew_shell_check.rc == 1
+# Add a task to detect if brew bash profile is changed to start a reboot if needed
+    - name: Remove unwanted pkgs block
+      block:
+        - include: tasks/pre_uninstall_pkgs.yml
+    - name: Install prerequisite pkgs block
+      block:  
+        - include: tasks/pre_install_pkgs.yml
 
-    - name: Remove old Docker packages and unused softwares
-      ansible.builtin.apt:
-        name:
-          - docker 
-          - docker-engine 
-          - docker.io 
-          - containerd 
-          - runc
-          - libreoffice-core
-          - libreoffice-style-colibre
-          - libreoffice-style-yaru
-          - libreoffice-style-elementary
-          - libreoffice-common
-        state: absent
-        autoremove: yes
-        autoclean: yes
-        purge: yes
-      when: ansible_distribution == 'Pop!_OS' and docker_src_check.stat.exists == false
-    - name: Docker - Prepare apt to use https repos
-      ansible.builtin.apt: 
-        name:
-          - ca-certificates
-          - curl
-          - gnupg
-          - lsb-release
-          - apt-transport-https
+
+
+
+
+
+
+
     - name: Add docker GPG key
       ansible.builtin.apt_key:
         url: https://download.docker.com/linux/ubuntu/gpg
@@ -107,6 +76,10 @@
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
       become: no
       when: brew_shell_check.rc == 1
+
+
+
+
   tasks:
     - name: Install my Apps
       ansible.builtin.apt:

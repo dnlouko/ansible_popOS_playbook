@@ -1,0 +1,10 @@
+---
+- name: Docker - Prepare apt to use https repos
+  ansible.builtin.apt: 
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+      - apt-transport-https
+...

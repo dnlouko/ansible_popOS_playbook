@@ -53,4 +53,12 @@
   register: vagrant_check
   changed_when: false
   failed_when: vagrant_check.rc >= 2
+- name: Check if Albion Online is installed
+  stat: 
+    path: /home/daniel/albiononline/game_x64
+  register: albion_check
+- name: Check if HomeBrew is installed
+  stat: 
+    path: /home/linuxbrew/.linuxbrew/
+  register: brew_check
 ...

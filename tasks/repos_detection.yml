@@ -1,0 +1,14 @@
+---
+- name: Check if the Docker repository is present
+  stat: 
+    path: /etc/apt/sources.list.d/docker.list
+  register: docker_src_check
+- name: Check if the Azure repository is present
+  stat: 
+    path: /etc/apt/sources.list.d/azure-cli.list
+  register: azcli_src_check
+- name: Check if the Spotify repository is present
+  stat: 
+    path: /etc/apt/sources.list.d/spotify.list
+  register: spotify_src_check
+...
