@@ -106,7 +106,6 @@
           - gnome-tweaks
           - gnome-sushi
           - gnome-shell-extensions
-          - gnome-shell-extension-bluetooth-quick-connect
           - gnome-shell-extension-weather
           - gnome-weather
           - azure-cli
