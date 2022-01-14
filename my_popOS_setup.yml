@@ -157,7 +157,9 @@
       when: lens_check.rc == 1
     - name: brew packages install
       community.general.homebrew:
-        name: terraform
+        name: 
+          - terraform
+          - helm
         state: present
         update_homebrew: yes
         upgrade_all: yes
