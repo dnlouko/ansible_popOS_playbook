@@ -162,7 +162,7 @@
         update_homebrew: yes
         upgrade_all: yes
       environment:
-        PATH: "/home/linuxbrew/.linuxbrew/bin"
+        PATH: "/home/linuxbrew/.linuxbrew/bin:{{ ansible_env.PATH }}"
       become: no
     - name: Install Snap Softwares
       community.general.snap:
