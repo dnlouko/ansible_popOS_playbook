@@ -160,6 +160,9 @@
         name: terraform
         state: present
         update_homebrew: yes
+        upgrade_all: yes
+      environment:
+        PATH: "/home/linuxbrew/.linuxbrew/bin/brew"
       become: no
     - name: Install Snap Softwares
       community.general.snap:
