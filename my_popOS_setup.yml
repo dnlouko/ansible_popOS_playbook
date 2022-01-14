@@ -101,6 +101,7 @@
           - build-essential 
           - procps 
           - file 
+          - jq
           - git
           - curl
           - gnome-tweaks
@@ -146,6 +147,12 @@
       ansible.builtin.apt:  
         deb: https://releases.hashicorp.com/vagrant/2.2.19/vagrant_2.2.19_x86_64.deb
       when: vagrant_check.rc == 1
+
+
+    - name: Install Kubernetes Lens
+      ansible.builtin.apt:  
+        deb: https://api.k8slens.dev/binaries/Lens-5.3.3-latest.20211223.1.amd64.deb
+      when: lens_check.rc == 1
     - name: brew packages install
       community.general.homebrew:
         name: terraform

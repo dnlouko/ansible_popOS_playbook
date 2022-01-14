@@ -11,6 +11,12 @@
   register: mailspring_check
   changed_when: false
   failed_when: mailspring_check.rc >= 2
+- name: Check if Lens must be installed
+  ansible.builtin.shell:
+    cmd: dpkg-query -l 'lens'
+  register: lens_check
+  changed_when: false
+  failed_when: mailspring_check.rc >= 2
 - name: Check if Teams must be installed
   ansible.builtin.shell: 
     cmd: dpkg-query -l 'teams'
