@@ -227,5 +227,5 @@
       changed_when: false
     - name: Updated Packages information for this Play
       ansible.builtin.debug:
-        msg: "{{ update_packages }}"
+        msg: "{{ update_packages.msg.stdout_lines }}"
 ...
