@@ -217,6 +217,7 @@
         state: latest
         autoremove: yes
         autoclean: yes
+      register: update_packages
     - name: Remove dependencies that are no longer required
       ansible.builtin.apt:
         autoremove: yes
@@ -224,4 +225,7 @@
     - name: Update all Flatpak software
       command: flatpak update -y
       changed_when: false
+    - name: Updated Packages information for this Play
+      ansible.builtin.debug:
+        msg: update_packages
 ...
