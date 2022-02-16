@@ -170,6 +170,10 @@
       environment:
         PATH: "/home/linuxbrew/.linuxbrew/bin:{{ ansible_env.PATH }}"
       become: no
+    - name: Install Flatpak packages
+      community.general.flatpak:
+        name: org.gnome.SoundRecorder
+        state: present
     - name: Install Snap Softwares
       community.general.snap:
         name: p3x-onenote
