@@ -3,7 +3,7 @@
   gather_facts: true
   become: yes
   #become_user: daniel
-  hosts: all
+  hosts: popos
   # collections:
   #   - community.general.homebrew
   vars:
