@@ -61,11 +61,11 @@
         cmd: |
           echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
       when: ansible_distribution == "Pop!_OS" and docker_src_check.stat.exists == false
-    - name: Add azcli repository 
-      ansible.builtin.shell:
-        cmd: |
-          echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
-      when: ansible_distribution == "Pop!_OS" and azcli_src_check.stat.exists == false
+    # - name: Add azcli repository 
+      # ansible.builtin.shell:
+        # cmd: |
+          # echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
+      # when: ansible_distribution == "Pop!_OS" and azcli_src_check.stat.exists == false
     - name: install homebrew
       ansible.builtin.shell:
         cmd: |
@@ -112,7 +112,7 @@
           - gnome-shell-extensions
           - gnome-shell-extension-weather
           - gnome-weather
-          - azure-cli
+          #- azure-cli
           - spotify-client
           # - ttf-mscorefonts-installer
         state: latest
