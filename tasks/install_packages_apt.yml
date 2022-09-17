@@ -1,0 +1,35 @@
+---
+- name: Install my Apps
+  ansible.builtin.apt:
+    name: 
+      - tree
+      - okular
+      - git
+      - python3
+      - python3-pip
+      - python3-virtualenv
+      - vim
+      - docker
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - gimp
+      - xz-utils
+      - snapd
+      - build-essential 
+      - procps 
+      - file 
+      - jq
+      - git
+      - curl
+      - gnome-tweaks
+      - gnome-sushi
+      - gnome-weather
+      - brave-browser
+      # - azure-cli
+      # - spotify-client
+      # - ttf-mscorefonts-installer
+    state: latest
+    update_cache: yes
+  when: ansible_distribution == 'Pop!_OS'
+...

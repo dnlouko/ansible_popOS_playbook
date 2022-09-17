@@ -3,7 +3,7 @@
   gather_facts: true
   become: yes
   #become_user: daniel
-  hosts: popos
+  hosts: localhost
   # collections:
   #   - community.general.homebrew
   vars:
@@ -29,6 +29,8 @@
         - include: tasks/pre_uninstall_pkgs.yml
     - name: Install prerequisite pkgs block
       block:  
+        # Include Repos Task
+        - include: tasks/pre_config_repositories.yml
         - include: tasks/pre_install_pkgs.yml
 
 ############################### START CHECKING PLAYBOOK HERE ##############################################
@@ -42,30 +44,6 @@
         url: https://packages.microsoft.com/keys/microsoft.asc
         keyring: /etc/apt/trusted.gpg.d/microsoft.gpg
         state: present
-    # Using shell to avoid errors
-    - name: Add Spotify repository
-      ansible.builtin.shell:
-        cmd: |
-          curl -sS https://download.spotify.com/debian/pubkey_0D811D58.gpg | sudo apt-key add - 
-          echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
-      when: ansible_distribution == "Pop!_OS" and spotify_src_check.stat.exists == false
-    # - name: Add Rancher Desktop Repository
-    #   ansible.builtin.shell:
-    #     cmd: | 
-    #       curl https://download.opensuse.org/repositories/isv:/Rancher:/stable/deb/Release.key | sudo apt-key add -
-    #       sudo add-apt-repository 'deb https://download.opensuse.org/repositories/isv:/Rancher:/stable/deb/ ./' 
-    #   when: ansible_distribution == "Pop!_OS" and spotify_src_check.stat.exists == false
-
-    - name: Add docker repository
-      ansible.builtin.shell:
-        cmd: |
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-      when: ansible_distribution == "Pop!_OS" and docker_src_check.stat.exists == false
-    # - name: Add azcli repository 
-      # ansible.builtin.shell:
-        # cmd: |
-          # echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
-      # when: ansible_distribution == "Pop!_OS" and azcli_src_check.stat.exists == false
     - name: install homebrew
       ansible.builtin.shell:
         cmd: |
@@ -80,44 +58,10 @@
       become: no
       when: brew_shell_check.rc == 1
 
-
-
-
   tasks:
-    - name: Install my Apps
-      ansible.builtin.apt:
-        name: 
-          - tree
-          - okular
-          - git
-          - python3
-          - python3-pip
-          - python3-virtualenv
-          - vim
-          - docker
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-          - gimp
-          - xz-utils
-          - snapd
-          - build-essential 
-          - procps 
-          - file 
-          - jq
-          - git
-          - curl
-          - gnome-tweaks
-          - gnome-sushi
-          - gnome-shell-extensions
-          - gnome-shell-extension-weather
-          - gnome-weather
-          #- azure-cli
-          - spotify-client
-          # - ttf-mscorefonts-installer
-        state: latest
-        update_cache: yes
-      when: ansible_distribution == 'Pop!_OS'
+    - name: Install pkgs block
+      block:
+        - include: tasks/install_packages_apt.yml
     - name: Install Mailspring DebPkg
       ansible.builtin.apt:    
         deb: https://updates.getmailspring.com/download?platform=linuxDeb 
@@ -142,28 +86,27 @@
       ansible.builtin.apt:  
         deb: https://wdl1.pcfg.cache.wpscdn.com/wpsdl/wpsoffice/download/linux/10702/wps-office_11.1.0.10702.XA_amd64.deb
       when: wps_check.rc == 1
-    - name: Install Virtualbox
-      ansible.builtin.apt:  
-        deb: https://download.virtualbox.org/virtualbox/6.1.28/virtualbox-6.1_6.1.28-147628~Ubuntu~eoan_amd64.deb
-      when: virtualbox_check.rc == 1
-    - name: Install Vagrant
-      ansible.builtin.apt:  
-        deb: https://releases.hashicorp.com/vagrant/2.2.19/vagrant_2.2.19_x86_64.deb
-      when: vagrant_check.rc == 1
+    # - name: Install Virtualbox
+    #   ansible.builtin.apt:  
+    #     deb: https://download.virtualbox.org/virtualbox/6.1.28/virtualbox-6.1_6.1.28-147628~Ubuntu~eoan_amd64.deb
+    #   when: virtualbox_check.rc == 1
+    # - name: Install Vagrant
+    #   ansible.builtin.apt:  
+    #     deb: https://releases.hashicorp.com/vagrant/2.2.19/vagrant_2.2.19_x86_64.deb
+    #   when: vagrant_check.rc == 1
 
-    - name: Install Kubernetes Lens
-      ansible.builtin.apt:  
-        deb: https://api.k8slens.dev/binaries/Lens-5.3.3-latest.20211223.1.amd64.deb
-      when: lens_check.rc == 1
+    # - name: Install Kubernetes Lens
+    #   ansible.builtin.apt:  
+    #     deb: https://api.k8slens.dev/binaries/Lens-5.3.3-latest.20211223.1.amd64.deb
+    #   when: lens_check.rc == 1
     - name: brew packages install
       community.general.homebrew:
         name: 
           - terraform
           - helm
-          # brew tap go-swagger/go-swagger | brew install go-swagger
-          - go
-          - go-task/tap/go-task
-
+          - awscli
+          - aws-vault
+          - kubectl
         state: present
         update_homebrew: yes
         upgrade_all: yes
@@ -174,24 +117,24 @@
     #   community.general.flatpak:
     #     name: org.gnome.SoundRecorder
     #     state: present
-    - name: Install Snap Softwares
-      community.general.snap:
-        name: p3x-onenote
-        state: present
-      when: ansible_distribution == 'Pop!_OS'
-    - name: Download Albion setup script
-      ansible.builtin.get_url:
-        url: https://live.albiononline.com/clients/20211013103626/albion-online-setup
-        dest: /home/daniel/Downloads/albion-online-setup
-        mode: 0775 # Execute permission
-      when: albion_check.stat.exists == false
-      register: albion_download
-    - name: Install AlbionOnline
-      ansible.builtin.shell: 
-        cmd: /home/daniel/Downloads/albion-online-setup
-      when: albion_check.stat.exists == false
-      become: no
-    # - name: Setup my ansible Env Source # find a way ti get to current user home
+    # - name: Install Snap Softwares
+    #   community.general.snap:
+    #     name: p3x-onenote
+    #     state: present
+    #   when: ansible_distribution == 'Pop!_OS'
+    # - name: Download Albion setup script
+    #   ansible.builtin.get_url:
+    #     url: https://live.albiononline.com/clients/20211013103626/albion-online-setup
+    #     dest: /home/daniel/Downloads/albion-online-setup
+    #     mode: 0775 # Execute permission
+    #   when: albion_check.stat.exists == false
+    #   register: albion_download
+    # - name: Install AlbionOnline
+    #   ansible.builtin.shell: 
+    #     cmd: /home/daniel/Downloads/albion-online-setup
+    #   when: albion_check.stat.exists == false
+    #   become: no
+    # - name: Setup my ansible Env Source # find a way to get to current user home
     #   ansible.builtin.shell: |
     #      cd ~/
     #      virtualenv ansible

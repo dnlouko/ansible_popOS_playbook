@@ -11,4 +11,8 @@
   stat: 
     path: /etc/apt/sources.list.d/spotify.list
   register: spotify_src_check
+- name: Check if the Brave Browser repository is present
+  stat: 
+    path: /etc/apt/sources.list.d/brave-browser-release.list
+  register: brave_src_check
 ...

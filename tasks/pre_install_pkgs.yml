@@ -7,4 +7,5 @@
       - gnupg
       - lsb-release
       - apt-transport-https
+      - gnome-shell-extensions
 ...
