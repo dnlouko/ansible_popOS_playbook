@@ -9,4 +9,4 @@ Setup my PopOS! after a clean install with every tool and settings that I'll nee
 # Todo
 After dismember the tasks convert then into a role
 # WIP
-Moving settings from the main my_popos_setup.yml playbook to task files to cleanup and organize the code
+Moving settings from the main my_popos_setup.yml playbook to task files to cleanup and organize the code.
