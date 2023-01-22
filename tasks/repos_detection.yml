@@ -1,18 +1,21 @@
 ---
 - name: Check if the Docker repository is present
-  stat: 
+  ansible.builtin.stat:
     path: /etc/apt/sources.list.d/docker.list
   register: docker_src_check
 - name: Check if the Azure repository is present
-  stat: 
+  ansible.builtin.stat:
     path: /etc/apt/sources.list.d/azure-cli.list
   register: azcli_src_check
 - name: Check if the Spotify repository is present
-  stat: 
+  ansible.builtin.stat:
     path: /etc/apt/sources.list.d/spotify.list
   register: spotify_src_check
 - name: Check if the Brave Browser repository is present
-  stat: 
+  ansible.builtin.stat:
     path: /etc/apt/sources.list.d/brave-browser-release.list
   register: brave_src_check
-...
+- name: Check if the Balena repository is present
+  ansible.builtin.stat:
+    path: /etc/apt/sources.list.d/balena-etcher.list
+  register: balena_src_check

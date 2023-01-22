@@ -2,10 +2,10 @@
 - name: Remove old Docker packages and unused softwares
   ansible.builtin.apt:
     name:
-      - docker 
-      - docker-engine 
-      - docker.io 
-      - containerd 
+      - docker
+      - docker-engine
+      - docker.io
+      - containerd
       - runc
       - libreoffice-core
       - libreoffice-style-colibre
@@ -13,8 +13,7 @@
       - libreoffice-style-elementary
       - libreoffice-common
     state: absent
-    autoremove: yes
-    autoclean: yes
-    purge: yes
-  when: ansible_distribution == 'Pop!_OS' and docker_src_check.stat.exists == false
-...
+    autoremove: true
+    autoclean: true
+    purge: true
+  when: ansible_distribution == 'Pop!_OS' and docker_src_check.stat.exists == "false"

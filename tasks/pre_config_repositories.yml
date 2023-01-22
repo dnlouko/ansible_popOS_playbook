@@ -1,33 +1,35 @@
 ---
 # Using shell to avoid errors
 - name: Add Brave Browser repository
-  ansible.builtin.shell:
+  ansible.builtin.command:
     cmd: |
-      sudo curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
-      echo "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main"|sudo tee /etc/apt/sources.list.d/brave-browser-release.list
-  when: ansible_distribution == "Pop!_OS" and brave_src_check.stat.exists == false
+      sudo curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg "{{ brave.base_url }}brave-browser-archive-keyring.gpg"
+      echo "deb {{ brave_keyring }} {{ brave.base_url }} stable main"|sudo tee "{{ brave_list }}"
+  when: ansible_distribution == "Pop!_OS" and brave_src_check.stat.exists == "false"
 - name: Add docker repository
-  ansible.builtin.shell:
+  ansible.builtin.command:
     cmd: |
       echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-  when: ansible_distribution == "Pop!_OS" and docker_src_check.stat.exists == false
+  when: ansible_distribution == "Pop!_OS" and docker_src_check.stat.exists == "false"
+- name: Add balena repository
+  ansible.builtin.command:
+    cmd: |
+      curl -1sLf 'https://dl.cloudsmith.io/public/balena/etcher/setup.deb.sh' | sudo -E bash
+  when: ansible_distribution == "Pop!_OS" and balena_src_check.stat.exists == "false"
     # - name: Add Spotify repository
     #   ansible.builtin.shell:
     #     cmd: |
-    #       curl -sS https://download.spotify.com/debian/pubkey_5E3C45D7B312C643.gpg | sudo apt-key add - 
+    #       curl -sS https://download.spotify.com/debian/pubkey_5E3C45D7B312C643.gpg | sudo apt-key add -
     #       echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
-
     #   when: ansible_distribution == "Pop!_OS" and spotify_src_check.stat.exists == false
     # - name: Add Rancher Desktop Repository
     #   ansible.builtin.shell:
-    #     cmd: | 
+    #     cmd: |
     #       curl https://download.opensuse.org/repositories/isv:/Rancher:/stable/deb/Release.key | sudo apt-key add -
-    #       sudo add-apt-repository 'deb https://download.opensuse.org/repositories/isv:/Rancher:/stable/deb/ ./' 
+    #       sudo add-apt-repository 'deb https://download.opensuse.org/repositories/isv:/Rancher:/stable/deb/ ./'
     #   when: ansible_distribution == "Pop!_OS" and spotify_src_check.stat.exists == false
-
-    # - name: Add azcli repository 
+    # - name: Add azcli repository
       # ansible.builtin.shell:
         # cmd: |
           # echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
       # when: ansible_distribution == "Pop!_OS" and azcli_src_check.stat.exists == false
-...

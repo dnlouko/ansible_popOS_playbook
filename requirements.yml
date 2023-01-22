@@ -6,5 +6,3 @@ roles:
 collections:
   - name: community.general
     source: https://galaxy.ansible.com
-  - name: kubernetes.core collection
-    source: https://galaxy.ansible.com/kubernetes/core

@@ -1,70 +1,69 @@
 ---
 - name: Validate ansible venv
-  ansible.builtin.shell: 
+  ansible.builtin.command:
     cmd: ls /home/daniel/ansible/bin/activate
   register: ansible_venv
   failed_when: ansible_venv.rc >= 2
   changed_when: ansible_venv == 1
 - name: Check if Mailspring must be installed
-  ansible.builtin.shell:
+  ansible.builtin.command:
     cmd: dpkg-query -l 'mailspring'
   register: mailspring_check
   changed_when: false
   failed_when: mailspring_check.rc >= 2
 - name: Check if Lens must be installed
-  ansible.builtin.shell:
+  ansible.builtin.command:
     cmd: dpkg-query -l 'lens'
   register: lens_check
   changed_when: false
   failed_when: mailspring_check.rc >= 2
 - name: Check if Teams must be installed
-  ansible.builtin.shell: 
+  ansible.builtin.command:
     cmd: dpkg-query -l 'teams'
   register: teams_check
   changed_when: false
   failed_when: teams_check.rc >= 2
 - name: Check if WPS-Office must be installed
-  ansible.builtin.shell:
+  ansible.builtin.command:
     cmd: dpkg-query -l 'wps-office'
   register: wps_check
   changed_when: false
   failed_when: wps_check.rc >= 2
 - name: Check if VScode must be installed
-  ansible.builtin.shell:
+  ansible.builtin.command:
     cmd: dpkg-query -l 'code'
   register: vscode_check
   changed_when: false
   failed_when: vscode_check.rc >= 2
 - name: Check if VirtualBox must be installed
-  ansible.builtin.shell: 
+  ansible.builtin.command:
     cmd: dpkg-query -l 'virtualbox-6.1'
   register: virtualbox_check
   changed_when: false
   failed_when: virtualbox_check.rc >= 2
 - name: Check if Edge must be installed
-  ansible.builtin.shell: 
+  ansible.builtin.command:
     cmd: dpkg-query -l 'microsoft-edge-stable'
   register: edge_check
   changed_when: false
   failed_when: edge_check.rc >= 2
 - name: Check if Franz must be installed
-  ansible.builtin.shell: 
+  ansible.builtin.command:
     cmd: dpkg-query -l 'franz'
   register: franz_check
   changed_when: false
   failed_when: franz_check.rc >= 2
 - name: Check if vagrant must be installed
-  ansible.builtin.shell: 
+  ansible.builtin.command:
     cmd: dpkg-query -l 'vagrant'
   register: vagrant_check
   changed_when: false
   failed_when: vagrant_check.rc >= 2
 - name: Check if Albion Online is installed
-  stat: 
+  ansible.builtin.stat:
     path: /home/daniel/albiononline/game_x64
   register: albion_check
 - name: Check if HomeBrew is installed
-  stat: 
+  ansible.builtin.stat:
     path: /home/linuxbrew/.linuxbrew/
   register: brew_check
-...

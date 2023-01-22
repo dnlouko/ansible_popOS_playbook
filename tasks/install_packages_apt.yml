@@ -1,7 +1,7 @@
 ---
 - name: Install my Apps
   ansible.builtin.apt:
-    name: 
+    name:
       - tree
       - okular
       - git
@@ -16,9 +16,9 @@
       - gimp
       - xz-utils
       - snapd
-      - build-essential 
-      - procps 
-      - file 
+      - build-essential
+      - procps
+      - file
       - jq
       - git
       - curl
@@ -26,10 +26,12 @@
       - gnome-sushi
       - gnome-weather
       - brave-browser
+      - thunderbird
+      - dnsmasq
+      - balena-etcher-electron
       # - azure-cli
       # - spotify-client
       # - ttf-mscorefonts-installer
-    state: latest
-    update_cache: yes
+    state: present
+    update_cache: true
   when: ansible_distribution == 'Pop!_OS'
-...

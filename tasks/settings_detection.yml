@@ -1,8 +1,8 @@
 ---
 - name: HomeBrew bash profile configuration check
-  shell: 
-    cmd: cat /home/daniel/.profile | grep 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
+  ansible.builtin.command:
+    # cmd: cat /home/daniel/.profile | grep 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
+    cmd: grep 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' /home/daniel/.profile
   register: brew_shell_check
   failed_when: brew_shell_check.rc >= 2
   changed_when: brew_shell_check.rc == 1
-...

@@ -1,0 +1,13 @@
+---
+- name: Dbenas Linux OS Setup
+  gather_facts: true
+  become: true
+  # become_user: daniel
+  hosts: localhost
+  # collections:
+  #   - community.general.homebrew
+  tasks:
+  - name: Os Prepare role
+    ansible.builtin.include_role:
+      name: ../os-prepare
+

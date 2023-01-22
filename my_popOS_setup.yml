@@ -1,37 +1,45 @@
 ---
 - name: Dbenas Linux OS Setup
   gather_facts: true
-  become: yes
-  #become_user: daniel
+  become: true
+  # become_user: daniel
   hosts: localhost
   # collections:
   #   - community.general.homebrew
   vars:
+    localdomain: "dbn"
     architecture_map:
       "x86_64": "amd64"
       "aarch64": "arm64"
       "aarch": "arm64"
       "armhf": "armhf"
       "armv7l": "armhf"
+    brave_keyring: "[signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg arch=amd64]"
+    brave_list: "/etc/apt/sources.list.d/brave-browser-release.list"
+    brave:
+      "base_url": "https://brave-browser-apt-release.s3.brave.com/"
   pre_tasks:
     - name: Detection block
-      block: 
-        # App detection task
-        - include: tasks/app_detection.yml
-        # Repository detection task
-        - include: tasks/repos_detection.yml
-        # Settings detection task
-        - include: tasks/settings_detection.yml
+      block:
+        - name: App detection tasks
+          ansible.builtin.include_tasks: tasks/app_detection.yml
+        - name: Repository detection tasks
+          ansible.builtin.include_tasks: tasks/repos_detection.yml
+        - name: Settings detection task
+          ansible.builtin.include_tasks: tasks/settings_detection.yml
 # VALIDAR SPOTIFY REPO LIST
 # Add a task to detect if brew bash profile is changed to start a reboot if needed
     - name: Remove unwanted pkgs block
       block:
-        - include: tasks/pre_uninstall_pkgs.yml
+        - name: Remove Unwanted packages
+          ansible.builtin.include_tasks: tasks/pre_uninstall_pkgs.yml
     - name: Install prerequisite pkgs block
-      block:  
+      block:
         # Include Repos Task
-        - include: tasks/pre_config_repositories.yml
-        - include: tasks/pre_install_pkgs.yml
+        - name: Include Repos Tasks
+          ansible.builtin.include_tasks: tasks/pre_config_repositories.yml
+        - name: Preinstall packages tasks
+          ansible.builtin.include_tasks: tasks/pre_install_pkgs.yml
 
 ############################### START CHECKING PLAYBOOK HERE ##############################################
     - name: Add docker GPG key
@@ -44,75 +52,120 @@
         url: https://packages.microsoft.com/keys/microsoft.asc
         keyring: /etc/apt/trusted.gpg.d/microsoft.gpg
         state: present
-    - name: install homebrew
+    - name: Setup homebrew
       ansible.builtin.shell:
         cmd: |
           echo | /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
       become_user: daniel
-      when: brew_check.stat.exists == false
+      when: brew_check.stat.exists == "false"
     - name: Add homebrew to user path and shellenv
       ansible.builtin.shell:
         cmd: |
           echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/daniel/.profile
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-      become: no
+      become: false
       when: brew_shell_check.rc == 1
 
   tasks:
     - name: Install pkgs block
       block:
-        - include: tasks/install_packages_apt.yml
+        - name: Include Install packages task
+          ansible.builtin.include_tasks: tasks/install_packages_apt.yml
     - name: Install Mailspring DebPkg
-      ansible.builtin.apt:    
-        deb: https://updates.getmailspring.com/download?platform=linuxDeb 
+      ansible.builtin.apt:
+        deb: https://updates.getmailspring.com/download?platform=linuxDeb
       when: mailspring_check.rc == 1
     - name: Install VScode DebPkg
-      ansible.builtin.apt:    
+      ansible.builtin.apt:
         deb: https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64
       when: vscode_check.rc == 1
     - name: Install EdgeStable DebPkg
-      ansible.builtin.apt:    
+      ansible.builtin.apt:
         deb: https://go.microsoft.com/fwlink/?linkid=2149051
       when: edge_check.rc == 1
     - name: Install Teams DebPkg
-      ansible.builtin.apt:    
+      ansible.builtin.apt:
         deb: https://go.microsoft.com/fwlink/p/?LinkID=2112886&culture=en-us&country=WW
       when: teams_check.rc == 1
     - name: Install Franz DebPkg
-      ansible.builtin.apt:  
+      ansible.builtin.apt:
         deb: https://github.com/meetfranz/franz/releases/download/v5.7.0/franz_5.7.0_amd64.deb
       when: franz_check.rc == 1
     - name: Install WPS Office
-      ansible.builtin.apt:  
+      ansible.builtin.apt:
         deb: https://wdl1.pcfg.cache.wpscdn.com/wpsdl/wpsoffice/download/linux/10702/wps-office_11.1.0.10702.XA_amd64.deb
       when: wps_check.rc == 1
+    - name: Create /etc/resolver directory
+      ansible.builtin.file:
+        state: directory
+        path: /etc/resolver
+        owner: root
+        mode: 0744
+    - name: Create resolver file for {{ localdomain }}
+      ansible.builtin.lineinfile:
+        path: "/etc/resolver/{{ localdomain }}"
+        line: nameserver 127.0.0.1
+        create: true
+        owner: root
+        mode: 0744
+    - name: Configure DNSMASQ file
+      ansible.builtin.template:
+        src: files/dnsmasq.conf.j2
+        dest: /etc/dnsmasq.conf
+        owner: root
+        mode: 0744
+    - name: Configure resolv.conf file
+      ansible.builtin.template:
+        src: files/resolv.conf.j2
+        dest: /etc/resolv.conf
+        owner: root
+        mode: 0744
+    - name: Disable systemd-resolved service
+      ansible.builtin.service:
+        name: systemd-resolved
+        enabled: false
+        state: stopped
+    - name: Enable dnsmasq service
+      ansible.builtin.service:
+        name: dnsmasq
+        enabled: true
+        state: started
+        # owner: bin
+        # group: wheel
+        # mode: '0644'
     # - name: Install Virtualbox
-    #   ansible.builtin.apt:  
+    #   ansible.builtin.apt:
     #     deb: https://download.virtualbox.org/virtualbox/6.1.28/virtualbox-6.1_6.1.28-147628~Ubuntu~eoan_amd64.deb
     #   when: virtualbox_check.rc == 1
     # - name: Install Vagrant
-    #   ansible.builtin.apt:  
+    #   ansible.builtin.apt:
     #     deb: https://releases.hashicorp.com/vagrant/2.2.19/vagrant_2.2.19_x86_64.deb
     #   when: vagrant_check.rc == 1
 
     # - name: Install Kubernetes Lens
-    #   ansible.builtin.apt:  
+    #   ansible.builtin.apt:
     #     deb: https://api.k8slens.dev/binaries/Lens-5.3.3-latest.20211223.1.amd64.deb
     #   when: lens_check.rc == 1
-    - name: brew packages install
+    - name: Brew packages install
       community.general.homebrew:
-        name: 
+        name:
           - terraform
           - helm
           - awscli
           - aws-vault
           - kubectl
+          - kustomize
+          - k3d
         state: present
-        update_homebrew: yes
-        upgrade_all: yes
+        update_homebrew: true
+        upgrade_all: true
       environment:
         PATH: "/home/linuxbrew/.linuxbrew/bin:{{ ansible_env.PATH }}"
-      become: no
+      become: false
+    # - name: Install K3D
+    #   ansible.builtin.command:
+    #     cmd: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
+    #   become: true
     # - name: Install Flatpak packages
     #   community.general.flatpak:
     #     name: org.gnome.SoundRecorder
@@ -130,7 +183,7 @@
     #   when: albion_check.stat.exists == false
     #   register: albion_download
     # - name: Install AlbionOnline
-    #   ansible.builtin.shell: 
+    #   ansible.builtin.shell:
     #     cmd: /home/daniel/Downloads/albion-online-setup
     #   when: albion_check.stat.exists == false
     #   become: no
@@ -146,12 +199,12 @@
       ansible.builtin.user:
         name: daniel
         groups: docker
-        append: yes
+        append: true
     - name: Configure docker services to start at boot
       ansible.builtin.service:
         name: "{{ item }}"
-        enabled: yes
-      loop: 
+        enabled: true
+      loop:
         - docker.service
         - containerd.service
     - name: Check if docker.sock file permissions are OK
@@ -162,17 +215,32 @@
       ansible.builtin.apt:
         name: "*"
         state: latest
-        autoremove: yes
-        autoclean: yes
+        autoremove: true
+        autoclean: true
       register: update_packages
     - name: Remove dependencies that are no longer required
       ansible.builtin.apt:
-        autoremove: yes
-        autoclean: yes
+        autoremove: true
+        autoclean: true
     - name: Update all Flatpak software
-      command: flatpak update -y
+      ansible.builtin.command: flatpak update -y
       changed_when: false
     - name: Updated Packages information for this Play
       ansible.builtin.debug:
         msg: "{{ update_packages.stdout_lines }}"
-...
+    - name: Copy wallpaper file
+      ansible.builtin.copy:
+        src: files/cloudWallpaperDark.jpg
+        dest: /home/daniel/.wallpaper.jpg
+        owner: daniel
+        group: daniel
+        mode: 0600
+    - name: Set GNOME wallpaper
+      become_user: daniel
+      community.general.dconf:
+        key: /org/gnome/desktop/background/picture-uri-dark
+        value: "'file:///home/daniel/.wallpaper.jpg'"
+        state: present
+    # - name: Debugao
+    #   ansible.builtin.debug:
+    #     msg: "{{ brave.base_url }}"
