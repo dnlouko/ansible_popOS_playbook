@@ -9,5 +9,5 @@
   tasks:
   - name: Os Prepare role
     ansible.builtin.include_role:
-      name: ../os-prepare
+      name: ../ansible-role-os-prepare
 
